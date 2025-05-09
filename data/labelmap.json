@@ -1,0 +1,10 @@
+{
+  "0": "background",
+  "1": "red_light",
+  "2": "yellow_light",
+  "3": "green_light",
+  "4": "off_light",
+  "5": "turn_left",
+  "6": "turn_right"
+ }
+
