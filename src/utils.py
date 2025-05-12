@@ -2,8 +2,13 @@ import json
 import numpy as np
 import cv2
 import os
+import random
+from typing import List, Dict, Union
+import matplotlib.pyplot as plt
+import matplotlib
 
-def polygon_to_mask(filepath: str, save_path: str, label_map: dict, show: bool = True)->None:
+
+def polygon_to_mask(filepath: str, save_path: str, label_map: Dict, show: bool = True)->None:
     """
     Converts a JSON annotation file (from LabelMe) into a segmentation mask with integer-encoded classes.
 
@@ -68,3 +73,67 @@ def generate_masks_from_folder(input_folder:str, output_folder:str, labelmap_pat
                         save_path=os.path.join(output_folder, f.replace("json", "png")),
                         show=show)
 
+
+def explore_image_mask_pairs(image_paths: List[str], mask_paths: List[str], labelmap: Dict,  num_samples: Union[int, None])->None:
+    """
+    Display image-mask pairs to inspect dataset consistency.
+    Args:
+        image_paths (list[str]): Paths to the dataset images.
+        smask_paths (list[str]): Paths to the dataset masks.
+        num_samples (int or None): Number of data samples to explore.
+        labelmap (dict): Dictionary mapping class indices (as strings) to class names.
+    Returns:
+        None.
+    """
+    assert len(image_paths) == len(mask_paths), "Image and mask lists must be the same length."
+    if num_samples is not None:
+        indices = random.sample(range(len(image_paths)), num_samples)
+    else:
+        indices = list(range(len(image_paths)))
+    cmap = matplotlib.colormaps.get_cmap('tab20')
+    colors = [cmap(i)[:3] for i in range(len(labelmap))]
+    colors_255 = [(np.array(color)*255).astype(np.uint8) for color in colors]
+    for idx in indices:
+        img = cv2.imread(image_paths[idx])
+        mask = cv2.imread(mask_paths[idx],cv2.IMREAD_UNCHANGED)
+        if img is not None:
+            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        assert img.shape[:2] == mask.shape[:2], f"Shape mismatch at index {i}: image shape = {img.shape[:2]}, mask shape = {mask.shape[:2]}"
+        h, w = mask.shape
+        color_mask = np.zeros((h, w, 3), dtype=np.uint8)
+        for i in range(len(labelmap)):
+            color_mask[mask == i] = colors_255[i]
+        fig, ax = plt.subplots(1, 2, figsize=(12, 6))
+        legend_elements = [matplotlib.patches.Patch(facecolor=colors[i], label=labelmap[str(i)]) for i in range(len(labelmap))]
+        plt.legend(handles=legend_elements, loc='center left', bbox_to_anchor=(1.02, 0.5), borderaxespad=0., title="Classes")
+        ax[0].set_title(f"Image: {os.path.basename(image_paths[idx])}")
+        ax[0].imshow(img)
+        ax[0].axis('off')
+        print(image_paths[idx].split('/')[-1])
+        ax[1].set_title(f"Mask: {os.path.basename(mask_paths[idx])}")
+        ax[1].imshow(color_mask)
+        ax[1].axis('off')
+        plt.subplots_adjust(right=0.8) #to ensure that the legend has enough room, so that it is not truncated
+        plt.tight_layout()
+        plt.show()
+
+
+
+
+if __name__=='__main__':
+    with open("/home/salwa/Documents/code/traffic_sign_seg/data/image_paths.txt", "r") as f:
+        image_paths = [f.strip('\n').replace("/Data4", "/Data4/images") for f in f.readlines()]
+    with open("/home/salwa/Documents/code/traffic_sign_seg/data/mask_paths.txt", "r") as f:
+        mask_paths = [f.strip('\n') for f in f.readlines()]
+    
+    # find_wrong_orientation(image_paths, mask_paths)
+    # labelmap_path = "/home/salwa/Documents/code/traffic_sign_seg/data/labelmap.json"
+    # input_folder = "/home/salwa/Downloads/Data4/annotations"
+    # output_folder = "/home/salwa/Downloads/Data4/masks"
+    # generate_masks_from_folder(input_folder=input_folder, output_folder=output_folder, labelmap_path=labelmap_path, show=False)
+
+    labelmap_path = "/home/salwa/Documents/code/traffic_sign_seg/data/labelmap.json"
+    with open(labelmap_path, 'r') as file:
+        labelmap = json.load(file)
+    
+    explore_image_mask_pairs(image_paths, mask_paths, labelmap, num_samples=None)
