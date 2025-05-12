@@ -6,7 +6,7 @@ import random
 from typing import List, Dict, Union
 import matplotlib.pyplot as plt
 import matplotlib
-
+from collections import defaultdict
 
 def polygon_to_mask(filepath: str, save_path: str, label_map: Dict, show: bool = True)->None:
     """
@@ -74,12 +74,12 @@ def generate_masks_from_folder(input_folder:str, output_folder:str, labelmap_pat
                         show=show)
 
 
-def explore_image_mask_pairs(image_paths: List[str], mask_paths: List[str], labelmap: Dict,  num_samples: Union[int, None])->None:
+def explore_image_mask_pairs(image_paths: List[str], mask_paths: List[str], labelmap: Dict[str, str],  num_samples: Union[int, None])->None:
     """
     Display image-mask pairs to inspect dataset consistency.
     Args:
         image_paths (list[str]): Paths to the dataset images.
-        smask_paths (list[str]): Paths to the dataset masks.
+        mask_paths (list[str]): Paths to the dataset masks.
         num_samples (int or None): Number of data samples to explore.
         labelmap (dict): Dictionary mapping class indices (as strings) to class names.
     Returns:
@@ -117,23 +117,37 @@ def explore_image_mask_pairs(image_paths: List[str], mask_paths: List[str], labe
         plt.tight_layout()
         plt.show()
 
+def count_pixels(mask_paths: List[str], labelmap:Dict[str, str], show:bool=True) -> defaultdict:
+    """
+    Count then number of pixels belonging to each class.
+    Args:
+        mask_paths (list[str]): Paths to the dataset masks.
+        labelmap (dict): Dictionary mapping class indices (as strings) to class names.
+        show (bool): set to True to show the pixel count as bar plot.
+    Returns:
+        None.
+    """
+    count = defaultdict(int)
+    for p in mask_paths:
+        mask = cv2.imread(p, cv2.IMREAD_UNCHANGED)
+        if mask is None:
+            continue
+        for class_idx_str in labelmap.keys():
+            class_idx = int(class_idx_str)
+            count[class_idx] += np.sum(mask==class_idx)
+    if show:
+        classes = list(labelmap.values())
+        values = list(count.values())
+        fig, ax = plt.subplots(1, 2, figsize=(12, 4))
+        ax[0].bar(classes, values)
+        ax[0].tick_params(axis='x', labelrotation=45)
+        ax[0].set_xlabel('Classes')
+        ax[0].set_ylabel('Number of pixels')
+        ax[0].set_title("Class count including background class")
+        ax[1].bar(classes[1:], values[1:])
+        ax[1].tick_params(axis='x', labelrotation=45)
+        ax[1].set_title("Class count (Zoom on foreground classes)")
+        plt.tight_layout()
+        plt.show()
 
-
-
-if __name__=='__main__':
-    with open("/home/salwa/Documents/code/traffic_sign_seg/data/image_paths.txt", "r") as f:
-        image_paths = [f.strip('\n').replace("/Data4", "/Data4/images") for f in f.readlines()]
-    with open("/home/salwa/Documents/code/traffic_sign_seg/data/mask_paths.txt", "r") as f:
-        mask_paths = [f.strip('\n') for f in f.readlines()]
-    
-    # find_wrong_orientation(image_paths, mask_paths)
-    # labelmap_path = "/home/salwa/Documents/code/traffic_sign_seg/data/labelmap.json"
-    # input_folder = "/home/salwa/Downloads/Data4/annotations"
-    # output_folder = "/home/salwa/Downloads/Data4/masks"
-    # generate_masks_from_folder(input_folder=input_folder, output_folder=output_folder, labelmap_path=labelmap_path, show=False)
-
-    labelmap_path = "/home/salwa/Documents/code/traffic_sign_seg/data/labelmap.json"
-    with open(labelmap_path, 'r') as file:
-        labelmap = json.load(file)
-    
-    explore_image_mask_pairs(image_paths, mask_paths, labelmap, num_samples=None)
+    return count
