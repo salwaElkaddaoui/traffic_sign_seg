@@ -75,16 +75,21 @@ def show_image_mask_prediction(image: np.ndarray, true_mask: np.ndarray = None, 
     plt.show()
 
 
-def count_pixels(mask_paths: List[str], labelmap:Dict[str, str], show:bool=True) -> defaultdict:
+def count_pixels(mask_paths: List[str], labelmap_path:str, show:bool=True) -> defaultdict:
     """
     Count then number of pixels belonging to each class.
     Args:
         mask_paths (list[str]): Paths to the dataset masks.
-        labelmap (dict): Dictionary mapping class indices (as strings) to class names.
+        labelmap_path (str): Path to the label map, which is a dictionary mapping class indices 
+                                (as strings) to class names.
         show (bool): set to True to show the pixel count as bar plot.
     Returns:
         None.
     """
+    assert os.path.exists(labelmap_path)
+    with open(labelmap_path, "r") as f:
+        labelmap=json.load(f)
+
     count = defaultdict(int)
     for p in mask_paths:
         mask = cv2.imread(p, cv2.IMREAD_UNCHANGED)
@@ -125,18 +130,3 @@ def show_mask(mask: np.ndarray, scale: float = 0.1) -> None:
     cv2.waitKey(0)
     cv2.destroyAllWindows()
 
-if __name__=='__main__':
-    labelmap_path = "/home/salwa/Documents/code/traffic_sign_seg/data/labelmap.json"
-    image_dir = "/home/salwa/Downloads/Data4/images"
-    mask_dir = "/home/salwa/Downloads/Data4/masks"
-    image_paths = [os.path.join(image_dir, i) for i in os.listdir(image_dir)]
-    mask_paths = [os.path.join(mask_dir, i.replace("jpg", "png")) for i in os.listdir(image_dir)]
-    
-    sample_idx = random.sample(list(range(len(image_paths))), k=1)[0]
-    print(sample_idx)
-    image = cv2.imread(image_paths[sample_idx])
-    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-    mask = cv2.imread(mask_paths[sample_idx], cv2.IMREAD_UNCHANGED)
-    print(f"{image.shape} {mask.shape}") 
-
-    show_image_mask_prediction(image, true_mask=mask, pred_mask=None, labelmap_path=labelmap_path, cmap_name='tab20')

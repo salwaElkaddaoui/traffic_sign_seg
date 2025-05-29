@@ -110,13 +110,3 @@ def generate_masks_from_folder(input_folder: str, output_folder: str, labelmap_p
 
         if show:
             show_mask(mask)
-
-
-if __name__=='__main__':
-    generate_masks_from_folder(input_folder="/home/salwa/Downloads/Data4/annotations",
-                               output_folder="/home/salwa/Downloads/Data4/masks",
-                               labelmap_path="/home/salwa/Documents/code/traffic_sign_seg/data/labelmap.json",
-                               show=False,
-                               contour_width=50,
-                               contour_class_idx=7
-                               )
