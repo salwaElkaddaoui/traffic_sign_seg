@@ -5,6 +5,7 @@
   "3": "green_light",
   "4": "off_light",
   "5": "turn_left",
-  "6": "turn_right"
+  "6": "turn_right",
+  "7": "contour"
  }
 
