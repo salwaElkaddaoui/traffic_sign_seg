@@ -1,7 +1,7 @@
 ## Realtime Traffic Sign Semantic Segmentation
 ### Lightweight Deep Learning Pipeline for Embedded Vision and Robotics
 
-![Live Demo](demo.gif)
+![Live Demo](output.gif)
 
 ### 1. Overview
 
